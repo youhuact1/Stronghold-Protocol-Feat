@@ -2,9 +2,40 @@
 
 《明日方舟》季节性自走棋塔防玩法「卫戍协议：盟约」的**非官方同人复刻**：浏览器即开即玩，单人或 1–4 人联机合作。
 
-![version](https://img.shields.io/badge/version-0.3.1-2ea44f)
+![version](https://img.shields.io/badge/version-0.3.2--feat-2ea44f)
 ![license](https://img.shields.io/badge/code%20license-GPL--3.0--or--later-blue)
 ![node](https://img.shields.io/badge/node-22%20%7C%2024-339933)
+
+## 关于本仓库
+
+> [!NOTE]
+> 本仓库不是官方上游仓库，而是一个**衍生分支**。
+>
+> | 项 | 值 |
+> |---|---|
+> | **当前版本** | 0.3.2-feat（多人功能分支） |
+> | **上游来源** | [`sganggs/Stronghold-Protocol`](https://github.com/sganggs/Stronghold-Protocol) · master 分支（v0.3.2） |
+> | **本分支特性** | feat/IncreasePlayerCapacity 多人功能：20 人房间容量、分组卡池、SERVER_EMERGENCY 机制、聊天、公告、asset-cache、RuntimeCache rv 查询、lobby.watch 等 |
+> | **合并说明** | 将上游 master（含 v0.3.2 全部 bug 修复）完整合入多人功能分支，保留所有 feat 特性的同时补齐上游迭代 |
+> | **部署地址** | `https://peotemptempstronghold.divemarkmap.top/` |
+
+### 与上游的主要差异
+
+- **房间容量**：原版 1–4 人联机 → 本分支 1–20 人联机（同盟/独立房间通用）
+- **分组卡池**：大房间按玩家分组，各组独立卡池与策略轮选
+- **SERVER_EMERGENCY**：服务器侧紧急机制，应对超大规模房间的异常与中断
+- **聊天系统**：房间内实时文本聊天
+- **公告推送**：服务器向客户端推送全局/房间公告
+- **asset-cache + RuntimeCache**：素材缓存与运行时版本校验，提升大房间加载速度与一致性
+- **lobby.watch / lobby.spectate**：观战与房间目录浏览
+
+### 免责声明（补充）
+
+> [!WARNING]
+> - 本分支的**全部代码**（包括上游合并进来的代码和 feat 功能新增/修改的代码）均遵循 GPL-3.0-or-later 许可证。
+> - 上游仓库的作者与维护者**未审核、未参与、未认可**本分支的任何改动；本分支的 bug、特性和行为均由本分支维护者独立负责。
+> - 本分支的部署地址 `peotemptempstronghold.divemarkmap.top` 是本分支维护者的个人测试服务器，与上游官方服务器无关。
+> - 本分支**不包含任何游戏素材**（美术、音频、文本、数据）；如需游玩请从上游 Releases 下载素材，或按上游文档从公开镜像/本机客户端提取。
 
 ## 声明
 
@@ -83,8 +114,8 @@ English summary: [below](#english).
 ### 方式二：从源码运行
 
 ```bash
-git clone https://github.com/sganggs/Stronghold-Protocol.git
-cd Stronghold-Protocol
+git clone -b feat https://github.com/youhuact1/Stronghold-Protocol-Feat.git
+cd Stronghold-Protocol-Feat
 npm install        # 安装依赖（postinstall 会把 pixi / preact / three 复制到 public/vendor）
 npm run setup      # 检查环境，并从公开镜像下载约 720 MB 美术 / 音频（可中断，再次运行会续传）
 npm start          # 启动服务器：http://localhost:3000
