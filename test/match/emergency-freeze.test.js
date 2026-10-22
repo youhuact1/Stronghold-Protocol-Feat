@@ -196,6 +196,9 @@ test('Final Assault freezes overtime, silence handover and AI pacer; resumes the
   const m = h.m;
   h.toPrep();
   // Target-state fixture: directly enter the boss round, without simulating all preceding rounds.
+  // Pin the pairing: the seeded shuffle may mix humans and bots, but the watchdog handover below needs a
+  // human pair (a partner to receive authority) and a bot pair (a server-run field to observe the freeze).
+  m.bossPairs = [['p_0', 'p_1'], ['ai_0', 'ai_1']];
   m.startRound(m.gd.bossRound);
   h.runToPhase(PHASE.PREP, m.gd.bossRound);
   assert.ok(h.drive(() => m.phase === PHASE.FINAL_ASSAULT));

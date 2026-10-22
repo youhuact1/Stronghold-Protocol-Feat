@@ -20,10 +20,11 @@ export class MatchIntents {
         if (!ps.infoReady) { ps.infoReady = true; this.markPublic(); this.maybeEndInfo(); }
         return OK;
       case 'g.rerollVote': return this.voteSetupReroll(ps, msg.voteId, msg.agree);
-      case 'g.band': return this.pickBand(ps, msg.bandId, msg);
-      case 'g.bandSkip': return this.skipBand(ps, msg);
+      case 'g.uniteSkipVote': return this.voteSkipUnite(ps, msg);
+      case 'g.band': return this.pickBand(ps, msg.bandId);
+      case 'g.bandSkip': return this.skipBand(ps);
       // the strategy highlighted in the draft screen (what a timed-out turn takes, timeoutBand)
-      case 'g.bandFocus': return this.bandFocus(ps, msg.bandId ?? null, msg);
+      case 'g.bandFocus': return this.bandFocus(ps, msg.bandId ?? null);
       case 'g.buy': return ps.buy(msg.slot);
       case 'g.refresh': return ps.refresh();
       case 'g.freeze': return ps.freeze();
@@ -34,23 +35,31 @@ export class MatchIntents {
       case 'g.equip': return ps.equip(msg.itemUid, msg.targetUid, msg.replaceUid ?? null);
       case 'g.art': return ps.useArt(msg.itemUid, msg.row, msg.col, msg.dir);
       case 'g.destroy': return ps.destroy(msg.uid);
+      case 'g.unequip': return ps.unequip(msg.itemUid);
       case 'g.reward': return ps.pickReward(msg.idx);
       case 'g.choice': return msg.choiceId !== undefined
         ? this.pickPersonalChoice(ps, msg.idx, msg.choiceId)
-        : this.pickCard(ps, msg.idx, msg);
+        : this.pickCard(ps, msg.idx);
+      // a plugin interaction window (PLUGIN API v2, docs/PLUGINS.md §10b): the window's own id, not a draft card —
+      // the host applies the declared primitive, a plugin never reaches the match state itself
+      case 'g.offer': return this.requestOffer(ps, msg.offerId, msg.idx, msg);
+      case 'g.offerRefresh': return this.requestOfferRefresh(ps, msg.offerId, msg.idx, msg);
       case 'g.ready': return ps.setReady(!!msg.ready);
       case 'g.emote': return this.emote(ps, msg.id);
       // playerId: the player tapped (a shared field names two) — the watch preference (item 56)
       case 'g.watch': return this.watch(ps, msg.fieldId, msg.playerId ?? null);
       case 'g.autoplay': return this.setAutoplay(ps, !!msg.on);
       case 'g.pause': return this.setPause(ps, !!msg.on);
-      case 'g.uniteSkipVote': return this.voteSkipUnite(ps, msg);
       // the stats the board's units start their next battle with (the detail card in prep, user playtest #4 item 7)
       case 'g.unitStats': return this.unitStats(ps, msg.seq ?? null);
       case 'g.leave': this.onLeave(ps.playerId); return OK;
+      case 'g.test': return this.applyTestCommand(ps, msg);
       case 'b.progress': return this._onProgress(ps, msg);
       case 'b.result': return this._onResult(ps, msg);
       case 'b.yield': return this._onYield(ps, msg);
+      // the host's answer to a delegated bot layout rehearsal (DESIGN §14): a report, never an error — an unknown,
+      // expired or foreign task is ignored (MatchRehearsal._onRehearsalResult)
+      case 'b.rehearsalResult': this._onRehearsalResult(ps, msg); return OK;
       default: return fail(ERR.BAD_MSG);
     }
   }
@@ -69,8 +78,6 @@ export class MatchIntents {
   setAutoplay(ps, on) {
     if (ps.autoplay === on) return OK;
     ps.autoplay = on;
-    this.refreshDraftPriority(ps.playerId);
-    this.refreshUniteSkipVote();
     this.markPublic();
     if (on) this.kickBot(ps);
     return OK;
@@ -78,11 +85,11 @@ export class MatchIntents {
 
   /** Let the bot act for a (newly) bot-controlled seat in the current phase. */
   kickBot(ps) {
-    if (this.emergencyFrozen) return;
     if (!ps.botControlled || this.ended) return;
+    this.offersChanged();
     if (this.phase === PHASE.INFO_CHECK && !ps.infoReady) { ps.infoReady = true; this.markPublic(); this.maybeEndInfo(); }
-    else if (this.phase === PHASE.BAND_DRAFT && this.draftTurn(ps.playerId) === ps.playerId) this.scheduleBandBot(this.draftGroup(ps.playerId));
-    else if (this.phase === PHASE.SP_DRAFT && this.spTurn(ps.playerId) === ps.playerId) this.scheduleSpBot(this.spGroup(ps.playerId));
+    else if (this.phase === PHASE.BAND_DRAFT && this.draftTurn() === ps.playerId) this.scheduleBandBot();
+    else if (this.phase === PHASE.SP_DRAFT && this.spTurn() === ps.playerId) this.scheduleSpBot();
     else if (this.phase === PHASE.PREP && ps.alive && !ps.ready) this.scheduleBotPrep(ps, 0);
   }
 
