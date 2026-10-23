@@ -53,3 +53,21 @@ test('simdata: setSimData injects the default source (browser path) and getSimDa
     await simdata.reloadDataSources();
   }
 });
+
+// The page imports /sim/simdata.js with its `?rv=` runtime cache tag; the browser stand-in of server/data.js
+// (/data.js) imports it URL-relative without one. Two module instances: the injected data must still be visible
+// through getSimData() of the other instance, or every content record lookup is null (garrison traits never installed
+// → in-battle bond layers — 萨尔贡 — never gained; player report after 0.3.1).
+test('simdata: the injected data is published across module instances (page ?rv= import vs shim import)', async () => {
+  const before = simdata.getSimData();
+  try {
+    const raw = { chess: {}, garrisons: { garrison_x: { garrisonId: 'garrison_x', eventType: 'IN_BATTLE' } } };
+    simdata.setSimData(raw);
+    assert.equal(globalThis.__simInjectedData, raw, 'a second instance (the /data.js stand-in) reads the same slot');
+    simdata.setSimData(null);
+    assert.equal(globalThis.__simInjectedData, undefined, 'cleared with the injection');
+  } finally {
+    simdata.setSimData(before);
+    await simdata.reloadDataSources();
+  }
+});

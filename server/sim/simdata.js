@@ -822,12 +822,23 @@ export function setSimData(data) {
   generatedCache = data && typeof data === 'object' ? data : null;
   injected = true;
   defaultSource = null;
+  // The injected data must also reach a *second* module instance of this file: the page imports /sim/simdata.js
+  // with its `?rv=` runtime cache tag, while the browser stand-in of server/data.js (/data.js) imports it
+  // URL-relative without one — two instances, so a module-local slot left the content modules' `gameData()` empty
+  // (every garrison/item/bond record lookup null: no IN_BATTLE garrison ever installed, 萨尔贡 layers never gained).
+  try {
+    if (typeof globalThis === 'object') {
+      if (generatedCache) globalThis.__simInjectedData = generatedCache;
+      else delete globalThis.__simInjectedData;
+    }
+  } catch { /* no globalThis */ }
   return getDefaultSource();
 }
 
 /** The raw data object behind the default source (injected or generated), or null. */
 export function getSimData() {
-  return generatedCache;
+  if (generatedCache) return generatedCache;
+  try { return (typeof globalThis === 'object' && globalThis.__simInjectedData) || null; } catch { return null; }
 }
 
 /** Reset caches (tests / hot reload after data regeneration). Node reloads data/*.json; browsers keep the injection. */

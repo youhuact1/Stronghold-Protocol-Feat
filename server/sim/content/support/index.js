@@ -38,10 +38,17 @@ const QUIET = Object.freeze({ warn() {}, error() {}, info() {} });
 let DATA = null;
 /** Frozen data/*.json (process singleton of server/data.js). Never mutate. */
 export function gameData() {
-  if (!DATA) {
-    try { DATA = getData({ log: QUIET }) || {}; } catch { DATA = {}; }
+  // An empty result must not be memoized: a browser battle may be the first thing to ask, before the page injected
+  // the fetched /data/*.json (the shim then answers {}) — every later record lookup would stay null (no IN_BATTLE
+  // garrison installed, 萨尔贡 layers never gained).
+  if (!DATA || (typeof DATA === 'object' && Object.keys(DATA).length === 0)) {
+    try {
+      const d = getData({ log: QUIET }) || {};
+      if (Object.keys(d).length) DATA = d;
+      else DATA ??= d;
+    } catch { DATA ??= {}; }
   }
-  return DATA;
+  return DATA ?? {};
 }
 /** Tests only: swap the data object (null → reload the singleton). Also drops derived caches. */
 export function setGameData(d) { DATA = d ?? null; CORE = null; }
