@@ -1,3 +1,11 @@
+## 0.3.2-feat — 2026-10-23
+
+基于上游 master v0.3.2 合并的 feat（IncreasePlayerCapacity）分支，包含上游 v0.3.2 全部修复与 feat 多人特性（20 人房间、分组卡池、SERVER_EMERGENCY、聊天、公告、asset-cache 与 RuntimeCache、lobby.watch／lobby.spectate）。本节记录 feat 分支在上游之外的修复。
+
+### 修复
+
+- 修复浏览器客户端战斗中盟约层数从不叠加（萨尔贡等）：页面以 `/sim/simdata.js?rv=<hash>` 导入模拟数据装配模块，而 `/data.js` 浏览器替身相对导入 `./sim/simdata.js`（无 `?rv=`）——两个模块实例使 `setSimData` 注入的游戏数据对内容模块不可见，`gameData()` 恒为空，所有 IN_BATTLE 干员特质从未安装，战斗内层数增益全部失效（莎草开技能不加层）。`setSimData` 现把注入数据发布到 `globalThis` 供第二个实例回读，`gameData()` 不再把空结果缓存住；补充跨实例可见性回归测试。
+
 ## 0.3.1 — 2026-10-18
 
 ### 规则
